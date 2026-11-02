@@ -1,4 +1,4 @@
-# ColdChain — Vaccine & Medicine Storage Monitor
+# ColdChain — Vaccine & Medicine Storage Monitor (V1 for hackathon)
 
 IoT cold-chain system for two vaccine fridges:
 
