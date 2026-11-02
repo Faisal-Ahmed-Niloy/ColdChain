@@ -1,0 +1,10 @@
+.env
+data/*.db
+data/*.db-*
+data/tamper_backup.json
+firmware/fridge_node/secrets.h
+config/passwd
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

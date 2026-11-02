@@ -1,0 +1,9 @@
+# Optional: run Mosquitto in Docker instead of installing it.
+#   docker compose up -d broker
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    ports: ["1883:1883"]
+    volumes:
+      - ./config:/mosquitto/config/project:ro
+    command: mosquitto -c /mosquitto/config/project/mosquitto.docker.conf

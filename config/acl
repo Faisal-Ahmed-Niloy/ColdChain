@@ -1,0 +1,23 @@
+# Each node may only publish its own data and read its own commands.
+user backend
+topic readwrite coldchain/v1/#
+
+user fridge_a
+topic write coldchain/v1/FRIDGE-A/telemetry
+topic write coldchain/v1/FRIDGE-A/status
+topic read coldchain/v1/FRIDGE-A/cmd
+
+user fridge_b
+topic write coldchain/v1/FRIDGE-B/telemetry
+topic write coldchain/v1/FRIDGE-B/status
+topic read coldchain/v1/FRIDGE-B/cmd
+
+# Software twin (demo without hardware) acts for both fridges
+user simulator
+topic write coldchain/v1/+/telemetry
+topic write coldchain/v1/+/status
+topic read coldchain/v1/+/cmd
+
+# Security demo: can sniff and inject telemetry, but has no HMAC key
+user attacker
+topic readwrite coldchain/v1/+/telemetry

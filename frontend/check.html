@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vaccine batch check</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&family=Public+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/assets/app.css">
+  <style>
+    .check { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+    .card { width: min(420px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+    .verdict-band { padding: 26px 22px 22px; }
+    .verdict-band.SAFE { background: var(--safe-soft); color: var(--safe); }
+    .verdict-band.AT_RISK { background: var(--warn-soft); color: var(--warn); }
+    .verdict-band.DISCARD, .verdict-band.EXPIRED { background: var(--breach-soft); color: var(--breach); }
+    .verdict-band .big { font-family: var(--figures); font-size: 52px; font-weight: 600; line-height: 1; }
+    .verdict-band p { margin: 8px 0 0; color: var(--ink); }
+    dl { margin: 0; padding: 18px 22px; display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; }
+    dt { color: var(--slate); font-size: 14px; }
+    dd { margin: 0; font-weight: 600; }
+    footer { padding: 0 22px 18px; font-size: 13px; color: var(--slate); }
+  </style>
+</head>
+<body>
+  <main class="check">
+    <article class="card" id="card" aria-live="polite">
+      <div class="verdict-band"><p>Checking batch…</p></div>
+    </article>
+  </main>
+  <script>
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const id = location.pathname.split("/").pop();
+    const card = document.getElementById("card");
+    fetch(`/api/public/batches/${encodeURIComponent(id)}`).then(async r => {
+      if (!r.ok) throw new Error(r.status === 404 ? "This code does not match any batch." : "The check service is unavailable.");
+      return r.json();
+    }).then(b => {
+      const key = b.expired ? "EXPIRED" : b.status;
+      const word = b.expired ? "Expired" : {SAFE: "Safe", AT_RISK: "At risk", DISCARD: "Discard"}[b.status];
+      const advice = b.expired ? "Past its expiry date. Do not use."
+        : {SAFE: "Stored within 2–8 °C limits. Fine to use before expiry.",
+           AT_RISK: "Has used most of its heat allowance. Ask the pharmacist before use.",
+           DISCARD: "Was exposed to too much heat. Do not use."}[b.status];
+      card.innerHTML = `
+        <div class="verdict-band ${esc(key)}"><div class="big">${esc(word)}</div><p>${esc(advice)}</p></div>
+        <dl>
+          <dt>Product</dt><dd>${esc(b.vaccine)}</dd>
+          <dt>Lot</dt><dd>${esc(b.lot_no)}</dd>
+          <dt>Expiry</dt><dd>${esc(new Date(b.expiry_date + "T00:00:00").toLocaleDateString(undefined, {day: "numeric", month: "long", year: "numeric"}))}</dd>
+        </dl>
+        <footer>Checked ${esc(new Date(b.checked_at).toLocaleString())} by the ColdChain storage monitor.</footer>`;
+      document.title = `${word} – ${b.vaccine}`;
+    }).catch(e => {
+      card.innerHTML = `<div class="verdict-band DISCARD"><div class="big">Not found</div><p>${esc(e.message)}</p></div>`;
+    });
+  </script>
+</body>
+</html>
